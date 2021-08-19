@@ -1,0 +1,6 @@
+version: "3"
+services:
+  openjtalk:
+    image: u6kapps/open-jtalk-api
+    ports:
+      - 8080:8080

@@ -1,0 +1,30 @@
+[package]
+name = "serenity-test-bot"
+version = "0.1.0"
+edition = "2018"
+
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = "0.2"
+tracing-futures = "0.2"
+
+[dependencies.songbird]
+version = "0.2.0"
+
+[dependencies.serenity]
+version = "0.10.9"
+default-features = false
+features = ["client", "gateway", "standard_framework", "model", "cache", "voice", "rustls_backend"]
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]
+
+[dependencies.reqwest]
+version = "0.11"
+features = ["json"]
+
+# [dependencies.diesel]
+# version = "1.4.4"
+# features = ["postgres"]
