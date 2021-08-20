@@ -126,6 +126,12 @@ fn count_member(guild: &Guild, channel_id: ChannelId) -> usize {
                 None => false,
             }
         })
+        .filter(|state| {
+            match &state.member {
+                Some(m) => !m.user.bot,
+                None => false,
+            }
+        })
         .count();
 }
 
