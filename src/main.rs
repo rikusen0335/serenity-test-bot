@@ -10,11 +10,16 @@ use serenity::client::Context;
 use serenity::{async_trait, framework::{StandardFramework, standard::macros::group}, model::{channel::{ChannelType, Message}, gateway::Ready, guild::Guild, id::{ChannelId, GuildId}, voice::VoiceState}, prelude::*};
 struct Handler;
 
+static COMMAND_PREFIX: &str = "r/";
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, message: Message) {
         if let Some(channel) = message.channel_id.to_channel_cached(&ctx.cache).await.unwrap().guild() {
-            if channel.name.contains("聞き専") {
+            if channel.name.contains("聞き専")
+                && !message.content.starts_with(COMMAND_PREFIX)
+                && !message.author.bot
+            {
                 let url = format!("http://localhost:8080/voice?text={}", message.content);
                 let filename = "audio.mp3";
                 let response: reqwest::Response = reqwest::get(url).await.unwrap();
@@ -136,7 +141,7 @@ async fn main() {
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
     let framework = StandardFramework::new()
-        .configure(|c| c.prefix("r/"))
+        .configure(|c| c.prefix(COMMAND_PREFIX))
         .group(&GENERAL_GROUP);
 
     // Create a new instance of the Client, logging in as a bot. This will
