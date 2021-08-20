@@ -79,7 +79,7 @@ async fn create_new_voice_channel(ctx: &Context, guild_id: &GuildId, state: &Voi
         let channel_join = channel_join_id.to_channel(&ctx.http).await.unwrap().guild().unwrap();
 
         // If channel name is specific one then create chann and move member into that
-        if channel_join.name() == "test" {
+        if channel_join.name().contains(&env::var("VC_CREATE_BUTTON").unwrap()) {
             if let Some(guild) = &ctx.cache.guild(guild_id).await {
                 if let Some(member) = &state.member {
                     let user_name = member.display_name();
@@ -100,7 +100,7 @@ async fn create_new_voice_channel(ctx: &Context, guild_id: &GuildId, state: &Voi
     }
 }
 
-// Delete voice channel if the channel is unused for this time.
+// Delete voice channel if the channel is unused for this time unless not a create button.
 async fn delete_unused_voice_channel(ctx: &Context, guild_id: &GuildId, state: &VoiceState) {
     let channel_left = state.channel_id.unwrap();
 
@@ -109,9 +109,9 @@ async fn delete_unused_voice_channel(ctx: &Context, guild_id: &GuildId, state: &
 
         if let Some(name) = channel_left.name(&ctx.cache).await {
             // Delete channel that has no members AND is not a channel to create
-            if member_count == 0 && name != "test" {
+            if member_count == 0 && !name.contains(&env::var("VC_CREATE_BUTTON").unwrap()) {
                 match channel_left.delete(&ctx.http).await {
-                    Ok(_) => println!("Removed channel named: {} due to no members left", name),
+                    Ok(_) => println!("Removed channel named: [{}] due to no members left", name),
                     Err(why) => println!("{}", why)
                 };
             }
@@ -148,6 +148,7 @@ async fn main() {
 
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    env::var("VC_CREATE_BUTTON").expect("You need to set VC_CREATE_BUTTON to use ability!");
 
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(COMMAND_PREFIX))
