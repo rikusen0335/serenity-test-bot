@@ -2,8 +2,9 @@ use std::fs::File;
 use std::io;
 use std::{convert::TryInto, env};
 
-use serenity::framework::standard::CommandResult;
+use serenity::framework::standard::{Args, CommandResult};
 use serenity::framework::standard::macros::command;
+use serenity::model::channel;
 use songbird::{SerenityInit, ffmpeg};
 use serenity::client::Context;
 use serenity::{async_trait, framework::{StandardFramework, standard::macros::group}, model::{channel::{ChannelType, Message}, gateway::Ready, guild::Guild, id::{ChannelId, GuildId}, voice::VoiceState}, prelude::*};
@@ -124,7 +125,7 @@ fn count_member(guild: &Guild, channel_id: ChannelId) -> usize {
 }
 
 #[group]
-#[commands(kite)]
+#[commands(kite, name)]
 struct General;
 
 #[tokio::main]
@@ -187,6 +188,35 @@ async fn kite(ctx: &Context, msg: &Message) -> CommandResult {
         .expect("Songbird Voice client placed in at initialisation.").clone();
 
     let _handler = manager.join(guild_id, connect_to).await;
+
+    Ok(())
+}
+
+#[command]
+#[only_in(guilds)]
+async fn name(ctx: &Context, message: &Message, mut args: Args) -> CommandResult {
+    let new_channel_name = args.single::<String>()?;
+
+    let channel_id = &message
+        .guild(&ctx.cache)
+        .await.unwrap()
+        .voice_states.get(&message.author.id)
+        .and_then(|voice_state| voice_state.channel_id);
+
+    let connect_to = match channel_id {
+        Some(channel) => channel,
+        None => {
+            &message.reply(ctx, "先にVC入れアホ").await.unwrap();
+
+            return Ok(());
+        }
+    };
+
+    if let Err(why) = connect_to.edit(&ctx.http, |c| c.name(&new_channel_name)).await {
+        println!("Could not change channel name caused by: {}", why);
+    }
+
+    &message.reply(&ctx.http, format!("チャンネル名を`{}`に変更しました", &new_channel_name)).await?;
 
     Ok(())
 }
