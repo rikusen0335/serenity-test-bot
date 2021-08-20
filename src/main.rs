@@ -75,22 +75,25 @@ impl EventHandler for Handler {
 
 // Create a new channel and bring user into it
 async fn create_new_voice_channel(ctx: &Context, guild_id: &GuildId, state: &VoiceState) {
-    if let Some(channel_join_id) = state.channel_id {
+    if let Some(channel_join_id) = &state.channel_id {
         let channel_join = channel_join_id.to_channel(&ctx.http).await.unwrap().guild().unwrap();
 
         // If channel name is specific one then create chann and move member into that
         if channel_join.name() == "test" {
             if let Some(guild) = &ctx.cache.guild(guild_id).await {
-                let new_channel = guild
-                    .create_channel(&ctx.http,
-                        |c|
-                        c
-                        .name("my-test-channel")
-                        .kind(ChannelType::Voice)
-                        .position(channel_join.position.try_into().unwrap())).await.unwrap();
-
                 if let Some(member) = &state.member {
-                    member.move_to_voice_channel(&ctx.http, new_channel).await.unwrap();
+                    let user_name = member.display_name();
+                    let new_channel = guild
+                        .create_channel(&ctx.http,
+                            |c|
+                            c
+                            .name(format!("{}のVC", user_name))
+                            .kind(ChannelType::Voice)
+                            .position(channel_join.position.try_into().unwrap())).await.unwrap();
+
+                    if let Some(member) = &state.member {
+                        member.move_to_voice_channel(&ctx.http, new_channel).await.unwrap();
+                    }
                 }
             }
         }
@@ -227,7 +230,7 @@ async fn name(ctx: &Context, message: &Message, mut args: Args) -> CommandResult
         println!("Could not change channel name caused by: {}", why);
     }
 
-    &message.reply(&ctx.http, format!("チャンネル名を`{}`に変更しました", &new_channel_name)).await?;
+    &message.reply(&ctx.http, format!("音声チャンネル名を`{}`に変更しました", &new_channel_name)).await?;
 
     Ok(())
 }
